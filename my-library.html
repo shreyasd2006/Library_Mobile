@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Library - The Book Haven</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Core Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        :root {
+            --terracotta: #C4704A;
+            --sage: #8B9A7A;
+            --cream: #F8F6F0;
+            --charcoal: #2C2C2C;
+            --gold: #E6C79C;
+            --muted-blue: #7A8B9A;
+            --warm-gray: #6B6B6B;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--cream);
+            color: var(--charcoal);
+        }
+        
+        .font-display {
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .font-mono {
+            font-family: 'Source Code Pro', monospace;
+        }
+        
+        .nav-link {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: var(--terracotta);
+            transition: width 0.3s ease;
+        }
+        
+        .nav-link:hover::after,
+        .nav-link.active::after {
+            width: 100%;
+        }
+        
+        .book-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .book-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(44, 44, 44, 0.1);
+        }
+        
+        .book-cover {
+            aspect-ratio: 2/3;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        
+        .btn-primary {
+            background-color: var(--terracotta);
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background-color: #B85D3E;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(196, 112, 74, 0.3);
+        }
+        
+        .btn-secondary {
+            border: 2px solid var(--sage);
+            color: var(--sage);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-secondary:hover {
+            background-color: var(--sage);
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .stagger-delay-1 { transition-delay: 0.1s; }
+        .stagger-delay-2 { transition-delay: 0.2s; }
+        .stagger-delay-3 { transition-delay: 0.3s; }
+        .stagger-delay-4 { transition-delay: 0.4s; }
+        
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        
+        .progress-ring-circle {
+            stroke-dasharray: 251.2;
+            stroke-dashoffset: 251.2;
+            transition: stroke-dashoffset 0.5s ease-in-out;
+        }
+        
+        .reading-list-item {
+            transition: all 0.3s ease;
+        }
+        
+        .reading-list-item:hover {
+            background-color: rgba(196, 112, 74, 0.05);
+        }
+        
+        .due-date-warning {
+            background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+            border: 1px solid #F59E0B;
+        }
+        
+        .due-date-critical {
+            background: linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%);
+            border: 1px solid #EF4444;
+        }
+        
+        .achievement-badge {
+            background: linear-gradient(135deg, var(--gold) 0%, #D4A574 100%);
+            color: white;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin: 0 auto 0.5rem;
+            box-shadow: 0 4px 12px rgba(230, 199, 156, 0.3);
+        }
+        
+        .stats-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+        }
+        
+        .tab-button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .tab-button.active {
+            background-color: var(--terracotta);
+            color: white;
+        }
+        
+        .tab-button:not(.active) {
+            background-color: rgba(196, 112, 74, 0.1);
+            color: var(--terracotta);
+        }
+        
+        .tab-button:not(.active):hover {
+            background-color: rgba(196, 112, 74, 0.2);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+        
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: scale(0.9);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        
+        .modal.show .modal-content {
+            transform: scale(1);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-8">
+                    <div class="font-display text-2xl font-bold text-terracotta">
+                        <a href="index.html">The Book Haven</a>
+                    </div>
+                    <div class="hidden md:flex space-x-6">
+                        <a href="index.html" class="nav-link text-charcoal hover:text-terracotta">Discover</a>
+                        <a href="my-library.html" class="nav-link active text-charcoal hover:text-terracotta">My Library</a>
+                        <a href="community.html" class="nav-link text-charcoal hover:text-terracotta">Community</a>
+                    </div>
+                </div>
+                
+                <div class="hidden md:flex items-center space-x-4">
+                    <div class="w-8 h-8 bg-sage rounded-full flex items-center justify-center">
+                        <span class="text-white text-sm font-medium">JD</span>
+                    </div>
+                </div>
+
+                <!-- Mobile menu button -->
+                <div class="md:hidden">
+                    <button id="hamburger-btn" class="p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
+                        <span class="sr-only">Open main menu</span>
+                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile menu, show/hide based on menu state. -->
+        <div class="hidden md:hidden" id="mobile-menu">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <a href="index.html" class="block px-3 py-2 rounded-md text-base font-medium text-white bg-gray-900">Discover</a>
+                <a href="my-library.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700">My Library</a>
+                <a href="community.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700">Community</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="pt-24 pb-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Header -->
+            <div class="mb-12 fade-in">
+                <h1 class="font-display text-4xl lg:text-5xl font-bold text-charcoal mb-4">My Library</h1>
+                <p class="text-xl text-warm-gray">Manage your books, track progress, and discover your next great read</p>
+            </div>
+
+            <!-- Stats Overview -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12 fade-in stagger-delay-1">
+                <div class="stats-card text-center">
+                    <div class="text-3xl font-bold text-terracotta mb-2">3</div>
+                    <div class="text-sm text-warm-gray">Currently Reading</div>
+                </div>
+                <div class="stats-card text-center">
+                    <div class="text-3xl font-bold text-sage mb-2">18</div>
+                    <div class="text-sm text-warm-gray">Books Read</div>
+                </div>
+                <div class="stats-card text-center">
+                    <div class="text-3xl font-bold text-muted-blue mb-2">24</div>
+                    <div class="text-sm text-warm-gray">Reading Goal</div>
+                </div>
+                <div class="stats-card text-center">
+                    <div class="text-3xl font-bold text-gold mb-2">75%</div>
+                    <div class="text-sm text-warm-gray">Goal Progress</div>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="flex flex-wrap gap-3 mb-8 fade-in stagger-delay-2">
+                <button class="tab-button active" data-tab="current">Currently Reading</button>
+                <button class="tab-button" data-tab="reading-list">Reading List</button>
+                <button class="tab-button" data-tab="history">Reading History</button>
+                <button class="tab-button" data-tab="achievements">Achievements</button>
+            </div>
+
+            <!-- Tab Content -->
+            <div id="tabContent">
+                <!-- Currently Reading Tab -->
+                <div id="current-tab" class="tab-content">
+                    <div class="grid lg:grid-cols-2 gap-8">
+                        <!-- Active Borrows -->
+                        <div class="fade-in stagger-delay-3">
+                            <h2 class="font-display text-2xl font-semibold text-charcoal mb-6">Active Borrows</h2>
+                            
+                            <div class="space-y-6">
+                                <!-- Book 1 -->
+                                <div class="book-card bg-white p-6 rounded-xl shadow-sm">
+                                    <div class="flex gap-4">
+                                        <img src="https://kimi-web-img.moonshot.cn/img/www.nessgraphica.com/21ac1cfdaefb2177b4ef4f64b663bcba2e531393.jpg" alt="The Seven Husbands of Evelyn Hugo" class="book-cover w-20 h-28 flex-shrink-0">
+                                        <div class="flex-1">
+                                            <h3 class="font-semibold text-charcoal mb-1">The Seven Husbands of Evelyn Hugo</h3>
+                                            <p class="text-warm-gray text-sm mb-3">by Taylor Jenkins Reid</p>
+                                            
+                                            <div class="mb-3">
+                                                <div class="flex justify-between text-sm mb-1">
+                                                    <span class="text-warm-gray">Chapter 15 of 30</span>
+                                                    <span class="text-terracotta font-medium">50% Complete</span>
+                                                </div>
+                                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                                    <div class="bg-gradient-to-r from-sage to-terracotta h-2 rounded-full" style="width: 50%"></div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="due-date-warning p-3 rounded-lg mb-3">
+                                                <div class="flex items-center justify-between">
+                                                    <span class="text-sm font-medium text-amber-800">Due in 3 days</span>
+                                                    <button onclick="openModal('extendModal')" class="text-sm text-amber-800 hover:underline">Request Extension</button>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="flex gap-2">
+                                                <button class="btn-primary px-4 py-2 rounded-lg text-sm">Continue Reading</button>
+                                                <button onclick="openModal('returnModal')" class="btn-secondary px-4 py-2 rounded-lg text-sm">Return Book</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Book 2 -->
+                                <div class="book-card bg-white p-6 rounded-xl shadow-sm">
+                                    <div class="flex gap-4">
+                                        <img src="https://kimi-web-img.moonshot.cn/img/readerhaven.com/c86cf4db59517716881610fa9fb422adc56389ff.jpg" alt="The Midnight Library" class="book-cover w-20 h-28 flex-shrink-0">
+                                        <div class="flex-1">
+                                            <h3 class="font-semibold text-charcoal mb-1">The Midnight Library</h3>
+                                            <p class="text-warm-gray text-sm mb-3">by Matt Haig</p>
+                                            
+                                            <div class="mb-3">
+                                                <div class="flex justify-between text-sm mb-1">
+                                                    <span class="text-warm-gray">Chapter 8 of 25</span>
+                                                    <span class="text-terracotta font-medium">32% Complete</span>
+                                                </div>
+                                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                                    <div class="bg-gradient-to-r from-sage to-terracotta h-2 rounded-full" style="width: 32%"></div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="bg-green-50 p-3 rounded-lg mb-3 border border-green-200">
+                                                <div class="flex items-center justify-between">
+                                                    <span class="text-sm font-medium text-green-800">Due in 2 weeks</span>
+                                                    <span class="text-sm text-green-600">✓ On track</span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="flex gap-2">
+                                                <button class="btn-primary px-4 py-2 rounded-lg text-sm">Continue Reading</button>
+                                                <button onclick="openModal('returnModal')" class="btn-secondary px-4 py-2 rounded-lg text-sm">Return Book</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Book 3 -->
+                                <div class="book-card bg-white p-6 rounded-xl shadow-sm">
+                                    <div class="flex gap-4">
+                                        <img src="https://kimi-web-img.moonshot.cn/img/s2982.pcdn.co/6701f5b848eed24f00b5e1575b47f6e98bb6ebdc.jpg" alt="Gone Girl" class="book-cover w-20 h-28 flex-shrink-0">
+                                        <div class="flex-1">
+                                            <h3 class="font-semibold text-charcoal mb-1">Gone Girl</h3>
+                                            <p class="text-warm-gray text-sm mb-3">by Gillian Flynn</p>
+                                            
+                                            <div class="mb-3">
+                                                <div class="flex justify-between text-sm mb-1">
+                                                    <span class="text-warm-gray">Chapter 22 of 28</span>
+                                                    <span class="text-terracotta font-medium">79% Complete</span>
+                                                </div>
+                                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                                    <div class="bg-gradient-to-r from-sage to-terracotta h-2 rounded-full" style="width: 79%"></div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="bg-green-50 p-3 rounded-lg mb-3 border border-green-200">
+                                                <div class="flex items-center justify-between">
+                                                    <span class="text-sm font-medium text-green-800">Due in 1 week</span>
+                                                    <span class="text-sm text-green-600">✓ Almost done!</span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="flex gap-2">
+                                                <button class="btn-primary px-4 py-2 rounded-lg text-sm">Continue Reading</button>
+                                                <button onclick="openModal('returnModal')" class="btn-secondary px-4 py-2 rounded-lg text-sm">Return Book</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Reading Statistics -->
+                        <div class="fade-in stagger-delay-4">
+                            <h2 class="font-display text-2xl font-semibold text-charcoal mb-6">Reading Statistics</h2>
+                            
+                            <div class="bg-white p-6 rounded-xl shadow-sm mb-6">
+                                <h3 class="font-semibold text-charcoal mb-4">This Month</h3>
+                                <div id="monthlyChart" style="height: 200px;"></div>
+                            </div>
+                            
+                            <div class="bg-white p-6 rounded-xl shadow-sm">
+                                <h3 class="font-semibold text-charcoal mb-4">Reading Pace</h3>
+                                <div class="space-y-4">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-warm-gray">Average per week</span>
+                                        <span class="font-semibold text-charcoal">2.3 books</span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-warm-gray">Favorite genre</span>
+                                        <span class="font-semibold text-charcoal">Mystery</span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-warm-gray">Longest reading streak</span>
+                                        <span class="font-semibold text-charcoal">12 days</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reading List Tab -->
+                <div id="reading-list-tab" class="tab-content" style="display: none;">
+                    <div class="grid lg:grid-cols-3 gap-8">
+                        <div class="lg:col-span-2">
+                            <h2 class="font-display text-2xl font-semibold text-charcoal mb-6">My Reading List</h2>
+                            
+                            <div class="space-y-4">
+                                <div class="reading-list-item p-4 rounded-lg border border-gray-200">
+                                    <div class="flex gap-4">
+                                        <img src="https://kimi-web-img.moonshot.cn/img/marionevado.art/bdb277f6fab8e54525197b73358c80a34d893526.jpg" alt="The Song of Achilles" class="book-cover w-16 h-24 flex-shrink-0">
+                                        <div class="flex-1">
+                                            <h3 class="font-semibold text-charcoal mb-1">The Song of Achilles</h3>
+                                            <p class="text-warm-gray text-sm mb-2">by Madeline Miller</p>
+                                            <div class="flex items-center mb-2">
+                                                <span class="text-gold text-sm">⭐</span>
+                                                <span class="text-sm text-warm-gray ml-1">4.9</span>
+                                                <span class="text-warm-gray mx-2">•</span>
+                                                <span class="text-sm text-sage">Romance</span>
+                                            </div>
+                                            <div class="flex gap-2">
+                                                <button class="btn-primary px-3 py-1 rounded text-xs">Borrow Now</button>
+                                                <button class="text-warm-gray hover:text-red-500 text-xs" onclick="removeFromReadingList(this)">Remove</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="reading-list-item p-4 rounded-lg border border-gray-200">
+                                    <div class="flex gap-4">
+                                        <img src="https://kimi-web-img.moonshot.cn/img/ninc.com/4070892352266c60baa1257cf17173132fe45696.png" alt="Atomic Habits" class="book-cover w-16 h-24 flex-shrink-0">
+                                        <div class="flex-1">
+                                            <h3 class="font-semibold text-charcoal mb-1">Atomic Habits</h3>
+                                            <p class="text-warm-gray text-sm mb-2">by James Clear</p>
+                                            <div class="flex items-center mb-2">
+                                                <span class="text-gold text-sm">⭐</span>
+                                                <span class="text-sm text-warm-gray ml-1">4.7</span>
+                                                <span class="text-warm-gray mx-2">•</span>
+                                                <span class="text-sm text-sage">Non-Fiction</span>
+                                            </div>
+                                            <div class="flex gap-2">
+                                                <button class="btn-primary px-3 py-1 rounded text-xs">Borrow Now</button>
+                                                <button class="text-warm-gray hover:text-red-500 text-xs" onclick="removeFromReadingList(this)">Remove</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="reading-list-item p-4 rounded-lg border border-gray-200">
+                                    <div class="flex gap-4">
+                                        <img src="https://kimi-web-img.moonshot.cn/img/designdusk.com/a7c9c7d84402970d296502d13980718730cb793c.jpg" alt="The Atlas Six" class="book-cover w-16 h-24 flex-shrink-0">
+                                        <div class="flex-1">
+                                            <h3 class="font-semibold text-charcoal mb-1">The Atlas Six</h3>
+                                            <p class="text-warm-gray text-sm mb-2">by Olivie Blake</p>
+                                            <div class="flex items-center mb-2">
+                                                <span class="text-gold text-sm">⭐</span>
+                                                <span class="text-sm text-warm-gray ml-1">4.3</span>
+                                                <span class="text-warm-gray mx-2">•</span>
+                                                <span class="text-sm text-sage">Fantasy</span>
+                                            </div>
+                                            <div class="flex gap-2">
+                                                <button class="btn-primary px-3 py-1 rounded text-xs">Borrow Now</button>
+                                                <button class="text-warm-gray hover:text-red-500 text-xs" onclick="removeFromReadingList(this)">Remove</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 class="font-display text-xl font-semibold text-charcoal mb-4">Reading List Stats</h3>
+                            <div class="bg-white p-6 rounded-xl shadow-sm">
+                                <div class="text-center mb-4">
+                                    <div class="text-3xl font-bold text-terracotta mb-1">12</div>
+                                    <div class="text-sm text-warm-gray">Books in list</div>
+                                </div>
+                                
+                                <div class="space-y-3">
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-warm-gray">Fiction</span>
+                                        <span class="font-medium">7 books</span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-warm-gray">Non-Fiction</span>
+                                        <span class="font-medium">3 books</span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-warm-gray">Mystery</span>
+                                        <span class="font-medium">2 books</span>
+                                    </div>
+                                </div>
+                                
+                                <button class="w-full btn-secondary py-2 rounded-lg text-sm mt-4">
+                                    Discover Similar Books
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reading History Tab -->
+                <div id="history-tab" class="tab-content" style="display: none;">
+                    <h2 class="font-display text-2xl font-semibold text-charcoal mb-6">Reading History</h2>
+                    
+                    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div class="bg-white p-6 rounded-xl shadow-sm">
+                            <img src="https://kimi-web-img.moonshot.cn/img/static01.nyt.com/e4946021ac5a7e179124a8a16d70cd294c5414aa.jpg" alt="Circe" class="book-cover w-full h-48 object-cover mb-4">
+                            <h3 class="font-semibold text-charcoal mb-2">Circe</h3>
+                            <p class="text-warm-gray text-sm mb-2">by Madeline Miller</p>
+                            <div class="flex items-center mb-3">
+                                <span class="text-gold text-sm">⭐⭐⭐⭐⭐</span>
+                                <span class="text-sm text-warm-gray ml-2">5 stars</span>
+                            </div>
+                            <p class="text-xs text-warm-gray mb-3">Finished: October 15, 2024</p>
+                            <button class="btn-secondary w-full py-2 rounded-lg text-sm">Write Review</button>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-xl shadow-sm">
+                            <img src="https://kimi-web-img.moonshot.cn/img/s2982.pcdn.co/133b4fdb2c96621c29550f655700502c4493bb6d.jpg" alt="The Invisible Life of Addie LaRue" class="book-cover w-full h-48 object-cover mb-4">
+                            <h3 class="font-semibold text-charcoal mb-2">The Invisible Life of Addie LaRue</h3>
+                            <p class="text-warm-gray text-sm mb-2">by V.E. Schwab</p>
+                            <div class="flex items-center mb-3">
+                                <span class="text-gold text-sm">⭐⭐⭐⭐</span>
+                                <span class="text-sm text-warm-gray ml-2">4 stars</span>
+                            </div>
+                            <p class="text-xs text-warm-gray mb-3">Finished: September 28, 2024</p>
+                            <button class="btn-secondary w-full py-2 rounded-lg text-sm">Write Review</button>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-xl shadow-sm">
+                            <img src="https://kimi-web-img.moonshot.cn/img/eliteonlinepublishing.com/b86ad5162f33431cd08b859471f4be47647bb25d.png" alt="Educated" class="book-cover w-full h-48 object-cover mb-4">
+                            <h3 class="font-semibold text-charcoal mb-2">Educated</h3>
+                            <p class="text-warm-gray text-sm mb-2">by Tara Westover</p>
+                            <div class="flex items-center mb-3">
+                                <span class="text-gold text-sm">⭐⭐⭐⭐⭐</span>
+                                <span class="text-sm text-warm-gray ml-2">5 stars</span>
+                            </div>
+                            <p class="text-xs text-warm-gray mb-3">Finished: September 10, 2024</p>
+                            <button class="btn-secondary w-full py-2 rounded-lg text-sm">View Review</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Achievements Tab -->
+                <div id="achievements-tab" class="tab-content" style="display: none;">
+                    <h2 class="font-display text-2xl font-semibold text-charcoal mb-6">Reading Achievements</h2>
+                    
+                    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div class="bg-white p-6 rounded-xl shadow-sm text-center">
+                            <div class="achievement-badge">🏆</div>
+                            <h3 class="font-semibold text-charcoal mb-2">First Book</h3>
+                            <p class="text-warm-gray text-sm mb-3">Read your first book</p>
+                            <div class="text-xs text-sage">Earned: March 15, 2024</div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-xl shadow-sm text-center">
+                            <div class="achievement-badge">📚</div>
+                            <h3 class="font-semibold text-charcoal mb-2">Bookworm</h3>
+                            <p class="text-warm-gray text-sm mb-3">Read 10 books</p>
+                            <div class="text-xs text-sage">Earned: July 22, 2024</div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-xl shadow-sm text-center">
+                            <div class="achievement-badge">🌍</div>
+                            <h3 class="font-semibold text-charcoal mb-2">Genre Explorer</h3>
+                            <p class="text-warm-gray text-sm mb-3">Try 5 different genres</p>
+                            <div class="text-xs text-sage">Earned: August 8, 2024</div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-xl shadow-sm text-center opacity-50">
+                            <div class="achievement-badge bg-gray-300">⚡</div>
+                            <h3 class="font-semibold text-charcoal mb-2">Speed Reader</h3>
+                            <p class="text-warm-gray text-sm mb-3">Read 3 books in one week</p>
+                            <div class="text-xs text-warm-gray">Progress: 1/3</div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-xl shadow-sm text-center opacity-50">
+                            <div class="achievement-badge bg-gray-300">📝</div>
+                            <h3 class="font-semibold text-charcoal mb-2">Reviewer</h3>
+                            <p class="text-warm-gray text-sm mb-3">Write 10 reviews</p>
+                            <div class="text-xs text-warm-gray">Progress: 7/10</div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-xl shadow-sm text-center opacity-50">
+                            <div class="achievement-badge bg-gray-300">🎯</div>
+                            <h3 class="font-semibold text-charcoal mb-2">Goal Crusher</h3>
+                            <p class="text-warm-gray text-sm mb-3">Complete yearly reading goal</p>
+                            <div class="text-xs text-warm-gray">Progress: 18/24</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Extension Request Modal -->
+    <div id="extendModal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="font-display text-2xl font-bold text-charcoal">Request Extension</h3>
+                <button onclick="closeModal('extendModal')" class="text-warm-gray hover:text-charcoal">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="mb-6">
+                <p class="text-warm-gray mb-4">Request an extension for:</p>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="font-semibold text-charcoal">The Seven Husbands of Evelyn Hugo</h4>
+                    <p class="text-warm-gray text-sm">Current due date: December 15, 2024</p>
+                </div>
+            </div>
+            
+            <div class="mb-6">
+                <label class="block text-charcoal font-medium mb-2">Reason for Extension</label>
+                <select class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-terracotta">
+                    <option>Need more time to finish</option>
+                    <option>Book is longer than expected</option>
+                    <option>Unexpected circumstances</option>
+                    <option>Other</option>
+                </select>
+            </div>
+            
+            <div class="mb-8">
+                <label class="block text-charcoal font-medium mb-2">Additional Notes (Optional)</label>
+                <textarea class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-terracotta" rows="3" placeholder="Tell us more about your request..."></textarea>
+            </div>
+            
+            <div class="flex gap-4">
+                <button onclick="closeModal('extendModal')" class="flex-1 btn-secondary py-3 rounded-lg font-medium">
+                    Cancel
+                </button>
+                <button onclick="submitExtensionRequest()" class="flex-1 btn-primary py-3 rounded-lg font-medium">
+                    Submit Request
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Return Book Modal -->
+    <div id="returnModal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="font-display text-2xl font-bold text-charcoal">Return Book</h3>
+                <button onclick="closeModal('returnModal')" class="text-warm-gray hover:text-charcoal">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="mb-6">
+                <p class="text-warm-gray mb-4">You're returning:</p>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="font-semibold text-charcoal">The Seven Husbands of Evelyn Hugo</h4>
+                    <p class="text-warm-gray text-sm">by Taylor Jenkins Reid</p>
+                </div>
+            </div>
+            
+            <div class="mb-8">
+                <h4 class="font-medium text-charcoal mb-3">Return Options</h4>
+                <div class="space-y-3">
+                    <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                        <input type="radio" name="returnMethod" value="library" class="mr-3" checked>
+                        <div>
+                            <div class="font-medium">Return to Library</div>
+                            <div class="text-sm text-warm-gray">Drop off at any library location</div>
+                        </div>
+                    </label>
+                    <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                        <input type="radio" name="returnMethod" value="dropbox" class="mr-3">
+                        <div>
+                            <div class="font-medium">Use Book Drop Box</div>
+                            <div class="text-sm text-warm-gray">Available 24/7 at main locations</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="flex gap-4">
+                <button onclick="closeModal('returnModal')" class="flex-1 btn-secondary py-3 rounded-lg font-medium">
+                    Cancel
+                </button>
+                <button onclick="confirmReturn()" class="flex-1 btn-primary py-3 rounded-lg font-medium">
+                    Confirm Return
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-charcoal text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <div class="font-display text-2xl font-bold mb-4">The Book Haven</div>
+                <p class="text-gray-400 mb-6">Bringing communities together through the magic of reading</p>
+                <div class="text-sm text-gray-500">
+                    © 2024 The Book Haven. All rights reserved.
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bottom Navigation -->
+    <div id="bottom-nav" class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
+        <div class="flex justify-around max-w-7xl mx-auto">
+            <a href="index.html" class="flex flex-col items-center justify-center p-2 text-terracotta">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1V10a1 1 0 00-1-1H7a1 1 0 00-1 1v10a1 1 0 001 1h2a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1h2a1 1 0 001-1z" />
+                </svg>
+                <span class="text-xs">Discover</span>
+            </a>
+            <a href="my-library.html" class="flex flex-col items-center justify-center p-2 text-gray-500">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 19V4a2 2 0 012-2h10a2 2 0 012 2v15l-7-4-7 4z" />
+                </svg>
+                <span class="text-xs">My Library</span>
+            </a>
+            <a href="community.html" class="flex flex-col items-center justify-center p-2 text-gray-500">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.653-.184-1.268-.5-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.653.184-1.268.5-1.857m0 0a3.001 3.001 0 014.5 0M12 15a3 3 0 110-6 3 3 0 010 6z" />
+                </svg>
+                <span class="text-xs">Community</span>
+            </a>
+        </div>
+    </div>
+
+    <script src="books.js"></script>
+    <script src="mobile-nav.js"></script>
+    <script>
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTabs();
+            initializeAnimations();
+            initializeChart();
+        });
+
+        function initializeTabs() {
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const tabId = this.dataset.tab;
+                    
+                    // Update active tab button
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Show corresponding tab content
+                    tabContents.forEach(content => {
+                        if (content.id === tabId + '-tab') {
+                            content.style.display = 'block';
+                        } else {
+                            content.style.display = 'none';
+                        }
+                    });
+                });
+            });
+        }
+
+        function initializeAnimations() {
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, observerOptions);
+
+            document.querySelectorAll('.fade-in').forEach(el => {
+                observer.observe(el);
+            });
+
+            setTimeout(() => {
+                document.querySelectorAll('.fade-in').forEach((el, index) => {
+                    if (el.getBoundingClientRect().top < window.innerHeight) {
+                        setTimeout(() => {
+                            el.classList.add('visible');
+                        }, index * 100);
+                    }
+                });
+            }, 500);
+        }
+
+        function initializeChart() {
+            const chartDom = document.getElementById('monthlyChart');
+            const myChart = echarts.init(chartDom);
+
+            const option = {
+                tooltip: {
+                    trigger: 'axis'
+                },
+                xAxis: {
+                    type: 'category',
+                    data: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                    axisLine: { show: false },
+                    axisTick: { show: false }
+                },
+                yAxis: {
+                    type: 'value',
+                    axisLine: { show: false },
+                    axisTick: { show: false },
+                    splitLine: { 
+                        lineStyle: { color: '#f0f0f0' }
+                    }
+                },
+                series: [{
+                    data: [2, 3, 1, 4],
+                    type: 'line',
+                    smooth: true,
+                    lineStyle: {
+                        color: '#C4704A',
+                        width: 3
+                    },
+                    itemStyle: {
+                        color: '#C4704A'
+                    },
+                    areaStyle: {
+                        color: {
+                            type: 'linear',
+                            x: 0,
+                            y: 0,
+                            x2: 0,
+                            y2: 1,
+                            colorStops: [{
+                                offset: 0, color: 'rgba(196, 112, 74, 0.3)'
+                            }, {
+                                offset: 1, color: 'rgba(196, 112, 74, 0.05)'
+                            }]
+                        }
+                    }
+                }]
+            };
+
+            myChart.setOption(option);
+        }
+
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('show');
+            }
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('show');
+            }
+        }
+
+        function submitExtensionRequest() {
+            closeModal('extendModal');
+            showNotification('Extension request submitted! You\'ll receive a response within 24 hours.', 'success');
+        }
+
+        function confirmReturn() {
+            closeModal('returnModal');
+            showNotification('Book return confirmed! Thank you for using our library.', 'success');
+        }
+
+        function removeFromReadingList(button) {
+            const listItem = button.closest('.reading-list-item');
+            if (listItem) {
+                listItem.style.opacity = '0.5';
+                setTimeout(() => {
+                    listItem.remove();
+                    showNotification('Book removed from reading list', 'info');
+                }, 300);
+            }
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-20 right-4 z-50 px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 ${
+                type === 'success' ? 'bg-green-500 text-white' :
+                type === 'error' ? 'bg-red-500 text-white' :
+                'bg-blue-500 text-white'
+            }`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0)';
+            }, 100);
+            
+            setTimeout(() => {
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+
+        // Close modals when clicking outside
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal')) {
+                e.target.classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>

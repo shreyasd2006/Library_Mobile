@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Book Haven - Discover Your Next Great Read</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Core Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@4.1.4/dist/js/splide.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.3.2/pixi.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    
+    <!-- Splide CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@splidejs/splide@4.1.4/dist/css/splide.min.css">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        :root {
+            --terracotta: #C4704A;
+            --sage: #8B9A7A;
+            --cream: #F8F6F0;
+            --charcoal: #2C2C2C;
+            --gold: #E6C79C;
+            --muted-blue: #7A8B9A;
+            --warm-gray: #6B6B6B;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--cream);
+            color: var(--charcoal);
+            overflow-x: hidden;
+        }
+        
+        .font-display {
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .font-mono {
+            font-family: 'Source Code Pro', monospace;
+        }
+        
+        .hero-bg {
+            background: linear-gradient(135deg, var(--cream) 0%, #F0EDE5 50%, var(--cream) 100%);
+            position: relative;
+        }
+        
+        .hero-bg::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(196, 112, 74, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(139, 154, 122, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+        
+        .book-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+        
+        .book-card:hover {
+            transform: translateY(-8px) rotateX(5deg) rotateY(-5deg);
+            box-shadow: 0 20px 40px rgba(44, 44, 44, 0.15);
+        }
+        
+        .book-cover {
+            aspect-ratio: 2/3;
+            object-fit: cover;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .filter-tag {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .filter-tag:hover {
+            background-color: var(--gold);
+            transform: scale(1.05);
+        }
+        
+        .filter-tag.active {
+            background-color: var(--terracotta);
+            color: white;
+        }
+        
+        .search-container {
+            position: relative;
+        }
+        
+        .search-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            z-index: 50;
+            max-height: 300px;
+            overflow-y: auto;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+        
+        .search-suggestions.show {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+        
+        .floating-particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .nav-link {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: var(--terracotta);
+            transition: width 0.3s ease;
+        }
+        
+        .nav-link:hover::after,
+        .nav-link.active::after {
+            width: 100%;
+        }
+        
+        .reading-progress {
+            background: linear-gradient(90deg, var(--sage) 0%, var(--terracotta) 100%);
+            height: 4px;
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+        
+        .challenge-card {
+            background: linear-gradient(135deg, rgba(196, 112, 74, 0.1) 0%, rgba(139, 154, 122, 0.1) 100%);
+            border: 1px solid rgba(196, 112, 74, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .challenge-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(196, 112, 74, 0.15);
+        }
+        
+        .btn-primary {
+            background-color: var(--terracotta);
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background-color: #B85D3E;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(196, 112, 74, 0.3);
+        }
+        
+        .btn-secondary {
+            border: 2px solid var(--sage);
+            color: var(--sage);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-secondary:hover {
+            background-color: var(--sage);
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .book-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .stagger-delay-1 { transition-delay: 0.1s; }
+        .stagger-delay-2 { transition-delay: 0.2s; }
+        .stagger-delay-3 { transition-delay: 0.3s; }
+        .stagger-delay-4 { transition-delay: 0.4s; }
+        
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+                line-height: 1.2;
+            }
+            
+            .book-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-8">
+                    <div class="font-display text-2xl font-bold text-terracotta">
+                        The Book Haven
+                    </div>
+                    <div class="hidden md:flex space-x-6">
+                        <a href="index.html" class="nav-link active text-charcoal hover:text-terracotta">Discover</a>
+                        <a href="my-library.html" class="nav-link text-charcoal hover:text-terracotta">My Library</a>
+                        <a href="community.html" class="nav-link text-charcoal hover:text-terracotta">Community</a>
+                    </div>
+                </div>
+                
+                <div class="hidden md:flex items-center space-x-4">
+                    <div class="search-container">
+                        <input 
+                            type="text" 
+                            id="searchInput"
+                            placeholder="Search books, authors, genres..."
+                            class="w-64 px-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:border-terracotta focus:ring-2 focus:ring-terracotta/20 transition-all duration-300"
+                        >
+                        <div id="searchSuggestions" class="search-suggestions">
+                            <!-- Dynamic suggestions will be inserted here -->
+                        </div>
+                    </div>
+                    <div class="w-8 h-8 bg-sage rounded-full flex items-center justify-center">
+                        <span class="text-white text-sm font-medium">JD</span>
+                    </div>
+                </div>
+
+                <!-- Mobile menu button -->
+                <div class="md:hidden">
+                    <button id="hamburger-btn" class="p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
+                        <span class="sr-only">Open main menu</span>
+                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile menu, show/hide based on menu state. -->
+        <div class="hidden md:hidden" id="mobile-menu">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <a href="index.html" class="block px-3 py-2 rounded-md text-base font-medium text-white bg-gray-900">Discover</a>
+                <a href="my-library.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700">My Library</a>
+                <a href="community.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700">Community</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-bg pt-24 pb-16 relative overflow-hidden">
+        <div id="floatingParticles" class="floating-particles"></div>
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <div class="fade-in">
+                    <h1 class="hero-title font-display text-5xl lg:text-6xl font-bold text-charcoal mb-6 leading-tight">
+                        Rediscover the
+                        <span class="text-terracotta">Magic</span>
+                        of Reading
+                    </h1>
+                    <p class="text-xl text-warm-gray mb-8 leading-relaxed">
+                        Your modern digital library experience that brings communities together through the shared love of books. Discover, borrow, and connect like never before.
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <button class="btn-primary px-8 py-3 rounded-full font-medium" onclick="scrollToSection('featured-books')">
+                            Explore Books
+                        </button>
+                        <button class="btn-secondary px-8 py-3 rounded-full font-medium" onclick="window.location.href='community.html'">
+                            Join Community
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="fade-in stagger-delay-2">
+                    <img src="hero-library-community.png" alt="Modern Library Community" class="w-full h-auto rounded-2xl shadow-2xl">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Books Section -->
+    <section id="featured-books" class="py-16 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12 fade-in">
+                <h2 class="font-display text-4xl font-bold text-charcoal mb-4">Featured This Week</h2>
+                <p class="text-xl text-warm-gray">Handpicked selections from our community</p>
+            </div>
+            
+            <!-- Filter Tags -->
+            <div class="flex flex-wrap justify-center gap-3 mb-12 fade-in stagger-delay-1">
+                <span class="filter-tag active px-6 py-2 rounded-full bg-terracotta text-white text-sm font-medium" data-filter="all">All Books</span>
+                <span class="filter-tag px-6 py-2 rounded-full bg-gray-100 text-charcoal text-sm font-medium" data-filter="fiction">Fiction</span>
+                <span class="filter-tag px-6 py-2 rounded-full bg-gray-100 text-charcoal text-sm font-medium" data-filter="mystery">Mystery</span>
+                <span class="filter-tag px-6 py-2 rounded-full bg-gray-100 text-charcoal text-sm font-medium" data-filter="romance">Romance</span>
+                <span class="filter-tag px-6 py-2 rounded-full bg-gray-100 text-charcoal text-sm font-medium" data-filter="sci-fi">Sci-Fi</span>
+                <span class="filter-tag px-6 py-2 rounded-full bg-gray-100 text-charcoal text-sm font-medium" data-filter="non-fiction">Non-Fiction</span>
+                <span class="filter-tag px-6 py-2 rounded-full bg-gray-100 text-charcoal text-sm font-medium" data-filter="poetry">Poetry</span>
+            </div>
+            
+            <!-- Books Grid -->
+            <div id="booksGrid" class="book-grid grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6 fade-in stagger-delay-2">
+                <!-- Books will be dynamically loaded here -->
+            </div>
+            
+            <!-- Load More Button -->
+            <div class="text-center mt-12 fade-in stagger-delay-4">
+                <button id="loadMoreBtn" class="btn-primary px-8 py-3 rounded-full font-medium">
+                    Load More Books
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Reading Challenges Section -->
+    <section class="py-16 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12 fade-in">
+                <h2 class="font-display text-4xl font-bold text-charcoal mb-4">Reading Challenges</h2>
+                <p class="text-xl text-warm-gray">Join our community in exciting reading adventures</p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="challenge-card p-6 rounded-2xl fade-in stagger-delay-1">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-display text-xl font-semibold text-charcoal">2024 Reading Goal</h3>
+                        <span class="text-2xl">📚</span>
+                    </div>
+                    <p class="text-warm-gray mb-4">Read 24 books this year</p>
+                    <div class="mb-4">
+                        <div class="flex justify-between text-sm text-warm-gray mb-2">
+                            <span>Progress</span>
+                            <span>18/24 books</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="reading-progress rounded-full" style="width: 75%"></div>
+                        </div>
+                    </div>
+                    <button class="w-full btn-secondary py-2 rounded-lg font-medium" onclick="showNotification('Feature coming soon!', 'info')">View Progress</button>
+                </div>
+                
+                <div class="challenge-card p-6 rounded-2xl fade-in stagger-delay-2">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-display text-xl font-semibold text-charcoal">Genre Explorer</h3>
+                        <span class="text-2xl">🌍</span>
+                    </div>
+                    <p class="text-warm-gray mb-4">Try 6 different genres</p>
+                    <div class="mb-4">
+                        <div class="flex justify-between text-sm text-warm-gray mb-2">
+                            <span>Progress</span>
+                            <span>4/6 genres</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="reading-progress rounded-full" style="width: 67%"></div>
+                        </div>
+                    </div>
+                    <button class="w-full btn-secondary py-2 rounded-lg font-medium" onclick="showNotification('Feature coming soon!', 'info')">Explore Genres</button>
+                </div>
+                
+                <div class="challenge-card p-6 rounded-2xl fade-in stagger-delay-3">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-display text-xl font-semibold text-charcoal">Community Picks</h3>
+                        <span class="text-2xl">👥</span>
+                    </div>
+                    <p class="text-warm-gray mb-4">Read 12 community recommendations</p>
+                    <div class="mb-4">
+                        <div class="flex justify-between text-sm text-warm-gray mb-2">
+                            <span>Progress</span>
+                            <span>7/12 books</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="reading-progress rounded-full" style="width: 58%"></div>
+                        </div>
+                    </div>
+                    <button class="w-full btn-secondary py-2 rounded-lg font-medium" onclick="showNotification('Feature coming soon!', 'info')">See Recommendations</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Community Highlights -->
+    <section class="py-16 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12 fade-in">
+                <h2 class="font-display text-4xl font-bold text-charcoal mb-4">Community Highlights</h2>
+                <p class="text-xl text-warm-gray">See what your fellow readers are discovering</p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="bg-gray-50 p-6 rounded-2xl fade-in stagger-delay-1">
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 bg-terracotta rounded-full flex items-center justify-center mr-3 text-2xl">
+                            <span>😊</span>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-charcoal">Alex Smith</h4>
+                            <p class="text-sm text-warm-gray">2 hours ago</p>
+                        </div>
+                    </div>
+                    <p class="text-warm-gray mb-3">"Just finished 'The Seven Husbands of Evelyn Hugo' - absolutely captivating! The character development is incredible."</p>
+                    <div class="flex items-center text-sm text-terracotta">
+                        <span>⭐⭐⭐⭐⭐</span>
+                        <span class="ml-2">Rated 5 stars</span>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-50 p-6 rounded-2xl fade-in stagger-delay-2">
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 bg-sage rounded-full flex items-center justify-center mr-3 text-2xl">
+                            <span>😁</span>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-charcoal">Maria Johnson</h4>
+                            <p class="text-sm text-warm-gray">4 hours ago</p>
+                        </div>
+                    </div>
+                    <p class="text-warm-gray mb-3">"Joined the Mystery Book Club! Our first meeting is next Tuesday. Can't wait to discuss 'Gone Girl'"</p>
+                    <div class="flex items-center text-sm text-sage">
+                        <span>📚</span>
+                        <span class="ml-2">Joined a book club</span>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-50 p-6 rounded-2xl fade-in stagger-delay-3">
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 bg-muted-blue rounded-full flex items-center justify-center mr-3 text-2xl">
+                            <span>😎</span>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-charcoal">David Lee</h4>
+                            <p class="text-sm text-warm-gray">6 hours ago</p>
+                        </div>
+                    </div>
+                    <p class="text-warm-gray mb-3">"Discovered a new favorite author! Klara and the Sun by Kazuo Ishiguro is a masterpiece of speculative fiction."</p>
+                    <div class="flex items-center text-sm text-muted-blue">
+                        <span>🎯</span>
+                        <span class="ml-2">Found a new author</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-charcoal text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <div class="font-display text-2xl font-bold mb-4">The Book Haven</div>
+                <p class="text-gray-400 mb-6">Bringing communities together through the magic of reading</p>
+                <div class="text-sm text-gray-500">
+                    © 2024 The Book Haven. All rights reserved.
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bottom Navigation -->
+    <div id="bottom-nav" class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
+        <div class="flex justify-around max-w-7xl mx-auto">
+            <a href="index.html" class="flex flex-col items-center justify-center p-2 text-terracotta">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1V10a1 1 0 00-1-1H7a1 1 0 00-1 1v10a1 1 0 001 1h2a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1h2a1 1 0 001-1z" />
+                </svg>
+                <span class="text-xs">Discover</span>
+            </a>
+            <a href="my-library.html" class="flex flex-col items-center justify-center p-2 text-gray-500">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 19V4a2 2 0 012-2h10a2 2 0 012 2v15l-7-4-7 4z" />
+                </svg>
+                <span class="text-xs">My Library</span>
+            </a>
+            <a href="community.html" class="flex flex-col items-center justify-center p-2 text-gray-500">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.653-.184-1.268-.5-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.653.184-1.268.5-1.857m0 0a3.001 3.001 0 014.5 0M12 15a3 3 0 110-6 3 3 0 010 6z" />
+                </svg>
+                <span class="text-xs">Community</span>
+            </a>
+        </div>
+    </div>
+
+    <script src="books.js"></script>
+    <script src="main.js"></script>
+    <script src="mobile-nav.js"></script>
+</body>
+</html>

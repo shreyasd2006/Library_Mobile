@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Details - The Book Haven</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Core Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@4.1.4/dist/js/splide.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    
+    <!-- Splide CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@splidejs/splide@4.1.4/dist/css/splide.min.css">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        :root {
+            --terracotta: #C4704A;
+            --sage: #8B9A7A;
+            --cream: #F8F6F0;
+            --charcoal: #2C2C2C;
+            --gold: #E6C79C;
+            --muted-blue: #7A8B9A;
+            --warm-gray: #6B6B6B;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--cream);
+            color: var(--charcoal);
+        }
+        
+        .font-display {
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .font-mono {
+            font-family: 'Source Code Pro', monospace;
+        }
+        
+        .book-cover-large {
+            aspect-ratio: 2/3;
+            object-fit: cover;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(44, 44, 44, 0.15);
+            transition: all 0.3s ease;
+        }
+        
+        .book-cover-large:hover {
+            transform: translateY(-8px) rotateX(5deg);
+            box-shadow: 0 30px 60px rgba(44, 44, 44, 0.2);
+        }
+        
+        .btn-primary {
+            background-color: var(--terracotta);
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background-color: #B85D3E;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(196, 112, 74, 0.3);
+        }
+        
+        .btn-secondary {
+            border: 2px solid var(--sage);
+            color: var(--sage);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-secondary:hover {
+            background-color: var(--sage);
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .btn-disabled {
+            background-color: #ccc;
+            color: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .star-rating {
+            color: var(--gold);
+        }
+        
+        .review-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+        
+        .review-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+        }
+        
+        .availability-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .available {
+            background-color: #10B981;
+            color: white;
+        }
+        
+        .unavailable {
+            background-color: #EF4444;
+            color: white;
+        }
+        
+        .nav-link {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: var(--terracotta);
+            transition: width 0.3s ease;
+        }
+        
+        .nav-link:hover::after,
+        .nav-link.active::after {
+            width: 100%;
+        }
+        
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+        
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: scale(0.9);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        
+        .modal.show .modal-content {
+            transform: scale(1);
+            opacity: 1;
+        }
+        
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        
+        .progress-ring-circle {
+            stroke-dasharray: 251.2;
+            stroke-dashoffset: 251.2;
+            transition: stroke-dashoffset 0.5s ease-in-out;
+        }
+        
+        .related-book {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .related-book:hover {
+            transform: translateY(-4px);
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            .lg\:col-span-1, .lg\:col-span-2 {
+                grid-column: auto;
+            }
+            #bookTitle {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-8">
+                    <div class="font-display text-2xl font-bold text-terracotta">
+                        <a href="index.html">The Book Haven</a>
+                    </div>
+                    <div class="hidden md:flex space-x-6">
+                        <a href="index.html" class="nav-link text-charcoal hover:text-terracotta">Discover</a>
+                        <a href="my-library.html" class="nav-link text-charcoal hover:text-terracotta">My Library</a>
+                        <a href="community.html" class="nav-link text-charcoal hover:text-terracotta">Community</a>
+                    </div>
+                </div>
+                
+                <div class="hidden md:flex items-center space-x-4">
+                    <button onclick="history.back()" class="text-warm-gray hover:text-terracotta transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        </svg>
+                    </button>
+                    <div class="w-8 h-8 bg-sage rounded-full flex items-center justify-center">
+                        <span class="text-white text-sm font-medium">JD</span>
+                    </div>
+                </div>
+
+                <!-- Mobile menu button -->
+                <div class="md:hidden">
+                    <button id="hamburger-btn" class="p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
+                        <span class="sr-only">Open main menu</span>
+                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile menu, show/hide based on menu state. -->
+        <div class="hidden md:hidden" id="mobile-menu">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <a href="index.html" class="block px-3 py-2 rounded-md text-base font-medium text-white bg-gray-900">Discover</a>
+                <a href="my-library.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700">My Library</a>
+                <a href="community.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700">Community</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="pt-24 pb-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-3 gap-12">
+                <!-- Book Cover & Basic Info -->
+                <div class="lg:col-span-1">
+                    <div class="fade-in">
+                        <img id="bookCover" src="" alt="" class="book-cover-large w-full max-w-sm mx-auto mb-6">
+                        
+                        <div class="text-center">
+                            <div id="availabilityBadge" class="availability-badge mb-4 mx-auto"></div>
+                            
+                            <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                                <button id="borrowBtn" class="btn-primary px-6 py-3 rounded-full font-medium">
+                                    Borrow This Book
+                                </button>
+                                <button id="reserveBtn" class="btn-secondary px-6 py-3 rounded-full font-medium" style="display: none;">
+                                    Reserve Book
+                                </button>
+                                <button id="addToListBtn" class="btn-secondary px-6 py-3 rounded-full font-medium">
+                                    Add to Reading List
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Book Details -->
+                <div class="lg:col-span-2">
+                    <div class="fade-in stagger-delay-1">
+                        <h1 id="bookTitle" class="font-display text-4xl lg:text-5xl font-bold text-charcoal mb-4"></h1>
+                        <p id="bookAuthor" class="text-xl text-warm-gray mb-4"></p>
+                        
+                        <div class="flex items-center mb-6">
+                            <div id="starRating" class="star-rating text-2xl mr-3"></div>
+                            <span id="ratingValue" class="text-warm-gray font-medium"></span>
+                            <span class="text-warm-gray mx-2">•</span>
+                            <span id="genreBadge" class="bg-sage text-white px-3 py-1 rounded-full text-sm font-medium"></span>
+                        </div>
+
+                        <!-- Book Description -->
+                        <div class="mb-8">
+                            <h2 class="font-display text-2xl font-semibold text-charcoal mb-4">About This Book</h2>
+                            <p id="bookDescription" class="text-warm-gray leading-relaxed text-lg"></p>
+                        </div>
+
+                        <!-- Book Stats -->
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                            <div class="bg-white p-4 rounded-xl text-center shadow-sm">
+                                <div class="text-2xl font-bold text-terracotta mb-1">4.6</div>
+                                <div class="text-sm text-warm-gray">Avg Rating</div>
+                            </div>
+                            <div class="bg-white p-4 rounded-xl text-center shadow-sm">
+                                <div class="text-2xl font-bold text-sage mb-1">1,247</div>
+                                <div class="text-sm text-warm-gray">Reviews</div>
+                            </div>
+                            <div class="bg-white p-4 rounded-xl text-center shadow-sm">
+                                <div class="text-2xl font-bold text-muted-blue mb-1">3</div>
+                                <div class="text-sm text-warm-gray">Available</div>
+                            </div>
+                            <div class="bg-white p-4 rounded-xl text-center shadow-sm">
+                                <div class="text-2xl font-bold text-gold mb-1">342</div>
+                                <div class="text-sm text-warm-gray">Pages</div>
+                            </div>
+                        </div>
+
+                        <!-- Reading Progress (if borrowed) -->
+                        <div id="readingProgress" class="mb-8" style="display: none;">
+                            <h3 class="font-display text-xl font-semibold text-charcoal mb-4">Your Reading Progress</h3>
+                            <div class="bg-white p-6 rounded-xl shadow-sm">
+                                <div class="flex items-center justify-between mb-4">
+                                    <span class="text-warm-gray">Chapter 12 of 24</span>
+                                    <span class="text-terracotta font-semibold">50% Complete</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-3 mb-4">
+                                    <div class="bg-gradient-to-r from-sage to-terracotta h-3 rounded-full" style="width: 50%"></div>
+                                </div>
+                                <div class="flex justify-between text-sm text-warm-gray">
+                                    <span>Due: December 15, 2024</span>
+                                    <button class="text-terracotta hover:underline">Request Extension</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reviews Section -->
+            <section class="mt-16 fade-in stagger-delay-2">
+                <h2 class="font-display text-3xl font-bold text-charcoal mb-8">Community Reviews</h2>
+                
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="review-card">
+                        <div class="flex items-center mb-4">
+                            <div class="w-10 h-10 bg-terracotta rounded-full flex items-center justify-center mr-3">
+                                <span class="text-white font-medium">AS</span>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-charcoal">Alex Smith</h4>
+                                <div class="star-rating text-lg">⭐⭐⭐⭐⭐</div>
+                            </div>
+                        </div>
+                        <p class="text-warm-gray leading-relaxed">"Absolutely captivating! The character development is incredible and the plot twists kept me guessing until the very end. A must-read!"</p>
+                        <div class="text-sm text-warm-gray mt-3">Reviewed 2 weeks ago</div>
+                    </div>
+                    
+                    <div class="review-card">
+                        <div class="flex items-center mb-4">
+                            <div class="w-10 h-10 bg-sage rounded-full flex items-center justify-center mr-3">
+                                <span class="text-white font-medium">MJ</span>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-charcoal">Maria Johnson</h4>
+                                <div class="star-rating text-lg">⭐⭐⭐⭐</div>
+                            </div>
+                        </div>
+                        <p class="text-warm-gray leading-relaxed">"Beautifully written with complex characters. The pacing was a bit slow in the middle, but the ending made it all worthwhile."</p>
+                        <div class="text-sm text-warm-gray mt-3">Reviewed 1 month ago</div>
+                    </div>
+                    
+                    <div class="review-card">
+                        <div class="flex items-center mb-4">
+                            <div class="w-10 h-10 bg-muted-blue rounded-full flex items-center justify-center mr-3">
+                                <span class="text-white font-medium">DL</span>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-charcoal">David Lee</h4>
+                                <div class="star-rating text-lg">⭐⭐⭐⭐⭐</div>
+                            </div>
+                        </div>
+                        <p class="text-warm-gray leading-relaxed">"I couldn't put this down! The author's prose is both elegant and accessible. Already recommended it to all my friends."</p>
+                        <div class="text-sm text-warm-gray mt-3">Reviewed 3 weeks ago</div>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-8">
+                    <button class="btn-secondary px-6 py-3 rounded-full font-medium" onclick="openModal('reviewModal')">
+                        Write a Review
+                    </button>
+                </div>
+            </section>
+
+            <!-- Related Books -->
+            <section class="mt-16 fade-in stagger-delay-3">
+                <h2 class="font-display text-3xl font-bold text-charcoal mb-8">You Might Also Like</h2>
+                
+                <div class="splide" id="relatedBooksCarousel">
+                    <div class="splide__track">
+                        <ul class="splide__list" id="relatedBooksList">
+                            <!-- Related books will be loaded here -->
+                        </ul>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Borrow Modal -->
+    <div id="borrowModal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="font-display text-2xl font-bold text-charcoal">Borrow Book</h3>
+                <button onclick="closeModal('borrowModal')" class="text-warm-gray hover:text-charcoal">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="mb-6">
+                <p class="text-warm-gray mb-4">You're about to borrow:</p>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 id="modalBookTitle" class="font-semibold text-charcoal"></h4>
+                    <p id="modalBookAuthor" class="text-warm-gray"></p>
+                </div>
+            </div>
+            
+            <div class="mb-6">
+                <label class="block text-charcoal font-medium mb-2">Pickup Location</label>
+                <select class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-terracotta">
+                    <option>Main Library - Downtown</option>
+                    <option>North Branch</option>
+                    <option>East Community Center</option>
+                    <option>West Shopping Plaza</option>
+                </select>
+            </div>
+            
+            <div class="mb-8">
+                <label class="block text-charcoal font-medium mb-2">Notification Preference</label>
+                <div class="space-y-2">
+                    <label class="flex items-center">
+                        <input type="radio" name="notification" value="email" class="mr-2" checked>
+                        <span>Email notification</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="radio" name="notification" value="sms" class="mr-2">
+                        <span>SMS notification</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="radio" name="notification" value="app" class="mr-2">
+                        <span>App notification</span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="flex gap-4">
+                <button onclick="closeModal('borrowModal')" class="flex-1 btn-secondary py-3 rounded-lg font-medium">
+                    Cancel
+                </button>
+                <button onclick="confirmBorrow()" class="flex-1 btn-primary py-3 rounded-lg font-medium">
+                    Confirm Borrow
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Write a Review Modal -->
+    <div id="reviewModal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="font-display text-2xl font-bold text-charcoal">Write a Review</h3>
+                <button onclick="closeModal('reviewModal')" class="text-warm-gray hover:text-charcoal">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-charcoal font-medium mb-2">Your Rating</label>
+                <div class="star-rating text-3xl">
+                    <span class="cursor-pointer">☆</span>
+                    <span class="cursor-pointer">☆</span>
+                    <span class="cursor-pointer">☆</span>
+                    <span class="cursor-pointer">☆</span>
+                    <span class="cursor-pointer">☆</span>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-charcoal font-medium mb-2">Your Review</label>
+                <textarea class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-terracotta" rows="4" placeholder="Share your thoughts on the book..."></textarea>
+            </div>
+
+            <div class="flex gap-4">
+                <button onclick="closeModal('reviewModal')" class="flex-1 btn-secondary py-3 rounded-lg font-medium">
+                    Cancel
+                </button>
+                <button onclick="submitReview()" class="flex-1 btn-primary py-3 rounded-lg font-medium">
+                    Submit Review
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="modal">
+        <div class="modal-content text-center">
+            <div class="mb-6">
+                <div class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <h3 class="font-display text-2xl font-bold text-charcoal mb-2">Book Borrowed Successfully!</h3>
+                <p class="text-warm-gray">You'll receive a notification when the book is ready for pickup.</p>
+            </div>
+            
+            <div class="bg-gray-50 p-4 rounded-lg mb-6 text-left">
+                <h4 class="font-semibold text-charcoal mb-2">Pickup Details:</h4>
+                <p class="text-warm-gray text-sm mb-1">📍 Main Library - Downtown</p>
+                <p class="text-warm-gray text-sm mb-1">📅 Ready for pickup in 2-3 days</p>
+                <p class="text-warm-gray text-sm">📧 Notification sent to your email</p>
+            </div>
+            
+            <button onclick="closeModal('successModal')" class="btn-primary px-8 py-3 rounded-lg font-medium">
+                Continue Browsing
+            </button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-charcoal text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <div class="font-display text-2xl font-bold mb-4">The Book Haven</div>
+                <p class="text-gray-400 mb-6">Bringing communities together through the magic of reading</p>
+                <div class="text-sm text-gray-500">
+                    © 2024 The Book Haven. All rights reserved.
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bottom Navigation -->
+    <div id="bottom-nav" class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
+        <div class="flex justify-around max-w-7xl mx-auto">
+            <a href="index.html" class="flex flex-col items-center justify-center p-2 text-terracotta">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1V10a1 1 0 00-1-1H7a1 1 0 00-1 1v10a1 1 0 001 1h2a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1h2a1 1 0 001-1z" />
+                </svg>
+                <span class="text-xs">Discover</span>
+            </a>
+            <a href="my-library.html" class="flex flex-col items-center justify-center p-2 text-gray-500">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 19V4a2 2 0 012-2h10a2 2 0 012 2v15l-7-4-7 4z" />
+                </svg>
+                <span class="text-xs">My Library</span>
+            </a>
+            <a href="community.html" class="flex flex-col items-center justify-center p-2 text-gray-500">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.653-.184-1.268-.5-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.653.184-1.268.5-1.857m0 0a3.001 3.001 0 014.5 0M12 15a3 3 0 110-6 3 3 0 010 6z" />
+                </svg>
+                <span class="text-xs">Community</span>
+            </a>
+        </div>
+    </div>
+
+    <script src="books.js"></script>
+    <script src="main.js"></script>
+    <script src="mobile-nav.js"></script>
+    <script>
+        let currentBook = null;
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadBookDetails();
+            initializeAnimations();
+            setupEventListeners();
+        });
+
+        function loadBookDetails() {
+            const bookId = localStorage.getItem('selectedBookId');
+            if (!bookId) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            currentBook = bookData.find(book => book.id == bookId);
+            if (!currentBook) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Populate book details
+            document.getElementById('bookCover').src = currentBook.cover;
+            document.getElementById('bookCover').alt = currentBook.title;
+            document.getElementById('bookTitle').textContent = currentBook.title;
+            document.getElementById('bookAuthor').textContent = `by ${currentBook.author}`;
+            document.getElementById('bookDescription').textContent = currentBook.description;
+            document.getElementById('ratingValue').textContent = currentBook.rating;
+            document.getElementById('genreBadge').textContent = currentBook.genre.charAt(0).toUpperCase() + currentBook.genre.slice(1);
+
+            // Set up availability badge
+            const availabilityBadge = document.getElementById('availabilityBadge');
+            const borrowedBooks = JSON.parse(localStorage.getItem('borrowedBooks')) || [];
+            const isBorrowed = borrowedBooks.includes(currentBook.id) || !currentBook.available;
+
+            if (!isBorrowed) {
+                availabilityBadge.className = 'availability-badge available';
+                availabilityBadge.innerHTML = '<span class="w-2 h-2 bg-white rounded-full mr-2"></span>Available Now';
+                document.getElementById('borrowBtn').style.display = 'block';
+                document.getElementById('reserveBtn').style.display = 'none';
+            } else {
+                availabilityBadge.className = 'availability-badge unavailable';
+                availabilityBadge.innerHTML = '<span class="w-2 h-2 bg-white rounded-full mr-2"></span>Currently Unavailable';
+                document.getElementById('borrowBtn').style.display = 'none';
+                document.getElementById('reserveBtn').style.display = 'block';
+            }
+
+            // Generate star rating
+            const starRating = document.getElementById('starRating');
+            const fullStars = Math.floor(currentBook.rating);
+            const hasHalfStar = currentBook.rating % 1 !== 0;
+            let starsHTML = '';
+            
+            for (let i = 0; i < fullStars; i++) {
+                starsHTML += '⭐';
+            }
+            if (hasHalfStar) {
+                starsHTML += '⭐';
+            }
+            
+            starRating.innerHTML = starsHTML;
+
+            // Load related books
+            loadRelatedBooks();
+        }
+
+        function loadRelatedBooks() {
+            const relatedBooks = bookData.filter(book => 
+                book.id !== currentBook.id && 
+                (book.genre === currentBook.genre || Math.random() > 0.5)
+            ).slice(0, 6);
+
+            const relatedBooksList = document.getElementById('relatedBooksList');
+            relatedBooksList.innerHTML = relatedBooks.map(book => `
+                <li class="splide__slide">
+                    <div class="related-book bg-white rounded-xl p-4 shadow-lg" onclick="openBookDetails(${book.id})">
+                        <img src="${book.cover}" alt="${book.title}" class="w-full h-48 object-cover rounded-lg mb-3">
+                        <h3 class="font-semibold text-charcoal text-sm mb-1 line-clamp-2">${book.title}</h3>
+                        <p class="text-warm-gray text-xs mb-2">by ${book.author}</p>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <span class="text-gold text-sm">⭐</span>
+                                <span class="text-sm text-warm-gray ml-1">${book.rating}</span>
+                            </div>
+                            <span class="text-xs ${book.available ? 'text-green-600' : 'text-red-600'}">
+                                ${book.available ? 'Available' : 'Borrowed'}
+                            </span>
+                        </div>
+                    </div>
+                </li>
+            `).join('');
+
+            // Initialize Splide carousel
+            new Splide('#relatedBooksCarousel', {
+                type: 'loop',
+                perPage: 4,
+                perMove: 1,
+                gap: '1rem',
+                pagination: false,
+                breakpoints: {
+                    1024: { perPage: 3 },
+                    768: { perPage: 2 },
+                    480: { perPage: 1 }
+                }
+            }).mount();
+        }
+
+        function setupEventListeners() {
+            document.getElementById('borrowBtn').addEventListener('click', () => openModal('borrowModal'));
+            document.getElementById('reserveBtn').addEventListener('click', () => showNotification('Reservation feature coming soon!', 'info'));
+            document.getElementById('addToListBtn').addEventListener('click', () => addToReadingList());
+        }
+
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('show');
+                
+                // Populate modal with current book info
+                if (modalId === 'borrowModal') {
+                    document.getElementById('modalBookTitle').textContent = currentBook.title;
+                    document.getElementById('modalBookAuthor').textContent = `by ${currentBook.author}`;
+                }
+            }
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('show');
+            }
+        }
+
+        function submitReview() {
+            closeModal('reviewModal');
+            showNotification('Thank you for your review!', 'success');
+        }
+
+        function confirmBorrow() {
+            closeModal('borrowModal');
+            
+            // Update book availability in localStorage
+            let borrowedBooks = JSON.parse(localStorage.getItem('borrowedBooks')) || [];
+            if (!borrowedBooks.includes(currentBook.id)) {
+                borrowedBooks.push(currentBook.id);
+                localStorage.setItem('borrowedBooks', JSON.stringify(borrowedBooks));
+            }
+
+            // Update book availability
+            currentBook.available = false;
+            
+            // Show success modal
+            setTimeout(() => {
+                openModal('successModal');
+            }, 300);
+            
+            // Update UI
+            setTimeout(() => {
+                loadBookDetails();
+            }, 2000);
+        }
+
+        function addToReadingList() {
+            let readingList = JSON.parse(localStorage.getItem('readingList') || '[]');
+            
+            if (!readingList.includes(currentBook.id)) {
+                readingList.push(currentBook.id);
+                localStorage.setItem('readingList', JSON.stringify(readingList));
+                showNotification('Book added to your reading list!', 'success');
+            } else {
+                showNotification('Book is already in your reading list!', 'info');
+            }
+        }
+
+        function openBookDetails(bookId) {
+            localStorage.setItem('selectedBookId', bookId);
+            window.location.reload();
+        }
+
+        function initializeAnimations() {
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, observerOptions);
+
+            document.querySelectorAll('.fade-in').forEach(el => {
+                observer.observe(el);
+            });
+
+            setTimeout(() => {
+                document.querySelectorAll('.fade-in').forEach((el, index) => {
+                    if (el.getBoundingClientRect().top < window.innerHeight) {
+                        setTimeout(() => {
+                            el.classList.add('visible');
+                        }, index * 200);
+                    }
+                });
+            }, 500);
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-20 right-4 z-50 px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 ${
+                type === 'success' ? 'bg-green-500 text-white' :
+                type === 'error' ? 'bg-red-500 text-white' :
+                'bg-blue-500 text-white'
+            }`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0)';
+            }, 100);
+            
+            setTimeout(() => {
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+
+        // Close modals when clicking outside
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal')) {
+                e.target.classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Community - The Book Haven</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Core Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@4.1.4/dist/js/splide.min.js"></script>
+    
+    <!-- Splide CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@splidejs/splide@4.1.4/dist/css/splide.min.css">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        :root {
+            --terracotta: #C4704A;
+            --sage: #8B9A7A;
+            --cream: #F8F6F0;
+            --charcoal: #2C2C2C;
+            --gold: #E6C79C;
+            --muted-blue: #7A8B9A;
+            --warm-gray: #6B6B6B;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--cream);
+            color: var(--charcoal);
+        }
+        
+        .font-display {
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .font-mono {
+            font-family: 'Source Code Pro', monospace;
+        }
+        
+        .nav-link {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: var(--terracotta);
+            transition: width 0.3s ease;
+        }
+        
+        .nav-link:hover::after,
+        .nav-link.active::after {
+            width: 100%;
+        }
+        
+        .event-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .event-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(44, 44, 44, 0.1);
+        }
+        
+        .btn-primary {
+            background-color: var(--terracotta);
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background-color: #B85D3E;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(196, 112, 74, 0.3);
+        }
+        
+        .btn-secondary {
+            border: 2px solid var(--sage);
+            color: var(--sage);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-secondary:hover {
+            background-color: var(--sage);
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .stagger-delay-1 { transition-delay: 0.1s; }
+        .stagger-delay-2 { transition-delay: 0.2s; }
+        .stagger-delay-3 { transition-delay: 0.3s; }
+        .stagger-delay-4 { transition-delay: 0.4s; }
+        
+        .challenge-progress {
+            background: linear-gradient(90deg, var(--sage) 0%, var(--terracotta) 100%);
+            height: 6px;
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+        
+        .leaderboard-item {
+            transition: all 0.3s ease;
+        }
+        
+        .leaderboard-item:hover {
+            background-color: rgba(196, 112, 74, 0.05);
+        }
+        
+        .discussion-thread {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .discussion-thread:hover {
+            background-color: rgba(196, 112, 74, 0.05);
+        }
+        
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .calendar-day:hover {
+            background-color: rgba(196, 112, 74, 0.1);
+        }
+        
+        .calendar-day.has-event {
+            background-color: var(--terracotta);
+            color: white;
+        }
+        
+        .calendar-day.has-event:hover {
+            background-color: #B85D3E;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+        
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: scale(0.9);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        
+        .modal.show .modal-content {
+            transform: scale(1);
+            opacity: 1;
+        }
+        
+        .author-spotlight {
+            background: linear-gradient(135deg, rgba(196, 112, 74, 0.1) 0%, rgba(139, 154, 122, 0.1) 100%);
+            border: 1px solid rgba(196, 112, 74, 0.2);
+        }
+        
+        .tab-button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .tab-button.active {
+            background-color: var(--terracotta);
+            color: white;
+        }
+        
+        .tab-button:not(.active) {
+            background-color: rgba(196, 112, 74, 0.1);
+            color: var(--terracotta);
+        }
+        
+        .tab-button:not(.active):hover {
+            background-color: rgba(196, 112, 74, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-8">
+                    <div class="font-display text-2xl font-bold text-terracotta">
+                        <a href="index.html">The Book Haven</a>
+                    </div>
+                    <div class="hidden md:flex space-x-6">
+                        <a href="index.html" class="nav-link text-charcoal hover:text-terracotta">Discover</a>
+                        <a href="my-library.html" class="nav-link text-charcoal hover:text-terracotta">My Library</a>
+                        <a href="community.html" class="nav-link active text-charcoal hover:text-terracotta">Community</a>
+                    </div>
+                </div>
+                
+                <div class="hidden md:flex items-center space-x-4">
+                    <div class="w-8 h-8 bg-sage rounded-full flex items-center justify-center">
+                        <span class="text-white text-sm font-medium">JD</span>
+                    </div>
+                </div>
+
+                <!-- Mobile menu button -->
+                <div class="md:hidden">
+                    <button id="hamburger-btn" class="p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
+                        <span class="sr-only">Open main menu</span>
+                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile menu, show/hide based on menu state. -->
+        <div class="hidden md:hidden" id="mobile-menu">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <a href="index.html" class="block px-3 py-2 rounded-md text-base font-medium text-white bg-gray-900">Discover</a>
+                <a href="my-library.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700">My Library</a>
+                <a href="community.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700">Community</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="pt-24 pb-16 bg-gradient-to-br from-cream to-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12 fade-in">
+                <h1 class="font-display text-4xl lg:text-6xl font-bold text-charcoal mb-6">
+                    Join Our <span class="text-terracotta">Reading</span> Community
+                </h1>
+                <p class="text-xl text-warm-gray max-w-3xl mx-auto leading-relaxed">
+                    Connect with fellow readers, join book clubs, participate in challenges, and discover your next favorite book through community recommendations.
+                </p>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-8 text-center fade-in stagger-delay-1">
+                <div class="bg-white p-6 rounded-xl shadow-sm">
+                    <div class="text-3xl mb-3">👥</div>
+                    <div class="text-2xl font-bold text-terracotta mb-2">2,847</div>
+                    <div class="text-warm-gray">Community Members</div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm">
+                    <div class="text-3xl mb-3">📚</div>
+                    <div class="text-2xl font-bold text-sage mb-2">156</div>
+                    <div class="text-warm-gray">Active Book Clubs</div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm">
+                    <div class="text-3xl mb-3">🏆</div>
+                    <div class="text-2xl font-bold text-muted-blue mb-2">89</div>
+                    <div class="text-warm-gray">Reading Challenges</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Tabs -->
+            <div class="flex flex-wrap gap-3 mb-8 fade-in stagger-delay-2">
+                <button class="tab-button active" data-tab="events">Events & Book Clubs</button>
+                <button class="tab-button" data-tab="challenges">Reading Challenges</button>
+                <button class="tab-button" data-tab="discussions">Discussions</button>
+                <button class="tab-button" data-tab="authors">Author Spotlights</button>
+            </div>
+
+            <!-- Tab Content -->
+            <div id="tabContent">
+                <!-- Events & Book Clubs Tab -->
+                <div id="events-tab" class="tab-content">
+                    <div class="grid lg:grid-cols-3 gap-8">
+                        <!-- Upcoming Events -->
+                        <div class="lg:col-span-2">
+                            <h2 class="font-display text-2xl font-semibold text-charcoal mb-6">Upcoming Events</h2>
+                            
+                            <div class="space-y-6">
+                                <!-- Event 1 -->
+                                <div class="event-card bg-white p-6 rounded-xl shadow-sm">
+                                    <div class="flex items-start gap-4">
+                                        <div class="bg-terracotta text-white p-3 rounded-lg text-center min-w-16">
+                                            <div class="text-lg font-bold">DEC</div>
+                                            <div class="text-2xl font-bold">15</div>
+                                        </div>
+                                        <div class="flex-1">
+                                            <div class="flex items-center gap-2 mb-2">
+                                                <span class="bg-sage text-white px-2 py-1 rounded text-xs font-medium">Book Club</span>
+                                                <span class="text-warm-gray text-sm">7:00 PM - 8:30 PM</span>
+                                            </div>
+                                            <h3 class="font-semibold text-charcoal mb-2">Mystery Book Club: "Gone Girl" Discussion</h3>
+                                            <p class="text-warm-gray text-sm mb-3">Join us for an engaging discussion about Gillian Flynn's psychological thriller. We'll explore the unreliable narration, plot twists, and character development.</p>
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex items-center text-sm text-warm-gray">
+                                                    <span>📍</span>
+                                                    <span class="ml-1">Main Library - Community Room</span>
+                                                </div>
+                                                <button onclick="joinEvent('mystery-club')" class="btn-primary px-4 py-2 rounded-lg text-sm">
+                                                    Join Event
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Event 2 -->
+                                <div class="event-card bg-white p-6 rounded-xl shadow-sm">
+                                    <div class="flex items-start gap-4">
+                                        <div class="bg-muted-blue text-white p-3 rounded-lg text-center min-w-16">
+                                            <div class="text-lg font-bold">DEC</div>
+                                            <div class="text-2xl font-bold">18</div>
+                                        </div>
+                                        <div class="flex-1">
+                                            <div class="flex items-center gap-2 mb-2">
+                                                <span class="bg-gold text-white px-2 py-1 rounded text-xs font-medium">Author Visit</span>
+                                                <span class="text-warm-gray text-sm">6:00 PM - 7:30 PM</span>
+                                            </div>
+                                            <h3 class="font-semibold text-charcoal mb-2">Meet the Author: Taylor Jenkins Reid</h3>
+                                            <p class="text-warm-gray text-sm mb-3">Bestselling author Taylor Jenkins Reid will discuss her latest novel and answer questions about her writing process. Book signing to follow.</p>
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex items-center text-sm text-warm-gray">
+                                                    <span>📍</span>
+                                                    <span class="ml-1">North Branch - Auditorium</span>
+                                                </div>
+                                                <button onclick="joinEvent('author-visit')" class="btn-primary px-4 py-2 rounded-lg text-sm">
+                                                    Join Event
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Event 3 -->
+                                <div class="event-card bg-white p-6 rounded-xl shadow-sm">
+                                    <div class="flex items-start gap-4">
+                                        <div class="bg-sage text-white p-3 rounded-lg text-center min-w-16">
+                                            <div class="text-lg font-bold">DEC</div>
+                                            <div class="text-2xl font-bold">22</div>
+                                        </div>
+                                        <div class="flex-1">
+                                            <div class="flex items-center gap-2 mb-2">
+                                                <span class="bg-terracotta text-white px-2 py-1 rounded text-xs font-medium">Workshop</span>
+                                                <span class="text-warm-gray text-sm">2:00 PM - 4:00 PM</span>
+                                            </div>
+                                            <h3 class="font-semibold text-charcoal mb-2">Creative Writing Workshop</h3>
+                                            <p class="text-warm-gray text-sm mb-3">Learn the fundamentals of creative writing in this hands-on workshop. Perfect for aspiring writers looking to develop their skills.</p>
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex items-center text-sm text-warm-gray">
+                                                    <span>📍</span>
+                                                    <span class="ml-1">East Community Center</span>
+                                                </div>
+                                                <button onclick="joinEvent('writing-workshop')" class="btn-primary px-4 py-2 rounded-lg text-sm">
+                                                    Join Event
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Calendar & Quick Stats -->
+                        <div>
+                            <h3 class="font-display text-xl font-semibold text-charcoal mb-4">December 2024</h3>
+                            <div class="bg-white p-6 rounded-xl shadow-sm mb-6">
+                                <div class="grid grid-cols-7 gap-1 text-center text-sm mb-2">
+                                    <div class="font-medium text-warm-gray p-2">Sun</div>
+                                    <div class="font-medium text-warm-gray p-2">Mon</div>
+                                    <div class="font-medium text-warm-gray p-2">Tue</div>
+                                    <div class="font-medium text-warm-gray p-2">Wed</div>
+                                    <div class="font-medium text-warm-gray p-2">Thu</div>
+                                    <div class="font-medium text-warm-gray p-2">Fri</div>
+                                    <div class="font-medium text-warm-gray p-2">Sat</div>
+                                </div>
+                                <div class="grid grid-cols-7 gap-1 text-sm">
+                                    <div class="calendar-day text-warm-gray">1</div>
+                                    <div class="calendar-day text-warm-gray">2</div>
+                                    <div class="calendar-day text-warm-gray">3</div>
+                                    <div class="calendar-day text-warm-gray">4</div>
+                                    <div class="calendar-day text-warm-gray">5</div>
+                                    <div class="calendar-day text-warm-gray">6</div>
+                                    <div class="calendar-day text-warm-gray">7</div>
+                                    <div class="calendar-day text-warm-gray">8</div>
+                                    <div class="calendar-day text-warm-gray">9</div>
+                                    <div class="calendar-day text-warm-gray">10</div>
+                                    <div class="calendar-day text-warm-gray">11</div>
+                                    <div class="calendar-day text-warm-gray">12</div>
+                                    <div class="calendar-day text-warm-gray">13</div>
+                                    <div class="calendar-day text-warm-gray">14</div>
+                                    <div class="calendar-day has-event" onclick="showEventDetails('mystery-club')">15</div>
+                                    <div class="calendar-day text-warm-gray">16</div>
+                                    <div class="calendar-day text-warm-gray">17</div>
+                                    <div class="calendar-day has-event" onclick="showEventDetails('author-visit')">18</div>
+                                    <div class="calendar-day text-warm-gray">19</div>
+                                    <div class="calendar-day text-warm-gray">20</div>
+                                    <div class="calendar-day text-warm-gray">21</div>
+                                    <div class="calendar-day has-event" onclick="showEventDetails('writing-workshop')">22</div>
+                                    <div class="calendar-day text-warm-gray">23</div>
+                                    <div class="calendar-day text-warm-gray">24</div>
+                                    <div class="calendar-day text-warm-gray">25</div>
+                                    <div class="calendar-day text-warm-gray">26</div>
+                                    <div class="calendar-day text-warm-gray">27</div>
+                                    <div class="calendar-day text-warm-gray">28</div>
+                                    <div class="calendar-day text-warm-gray">29</div>
+                                    <div class="calendar-day text-warm-gray">30</div>
+                                    <div class="calendar-day text-warm-gray">31</div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-white p-6 rounded-xl shadow-sm">
+                                <h4 class="font-semibold text-charcoal mb-4">Your Events</h4>
+                                <div class="space-y-3">
+                                    <div class="flex items-center justify-between p-3 bg-sage/10 rounded-lg">
+                                        <div>
+                                            <div class="font-medium text-sm">Mystery Book Club</div>
+                                            <div class="text-xs text-warm-gray">Dec 15, 7:00 PM</div>
+                                        </div>
+                                        <span class="text-xs text-sage font-medium">Attending</span>
+                                    </div>
+                                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                        <div>
+                                            <div class="font-medium text-sm">Author Visit</div>
+                                            <div class="text-xs text-warm-gray">Dec 18, 6:00 PM</div>
+                                        </div>
+                                        <button class="text-xs text-terracotta hover:underline">Join</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reading Challenges Tab -->
+                <div id="challenges-tab" class="tab-content" style="display: none;">
+                    <div class="grid lg:grid-cols-3 gap-8">
+                        <div class="lg:col-span-2">
+                            <h2 class="font-display text-2xl font-semibold text-charcoal mb-6">Active Challenges</h2>
+                            
+                            <div class="space-y-6">
+                                <!-- Challenge 1 -->
+                                <div class="bg-white p-6 rounded-xl shadow-sm">
+                                    <div class="flex items-start gap-4">
+                                        <div class="text-4xl">📚</div>
+                                        <div class="flex-1">
+                                            <h3 class="font-semibold text-charcoal mb-2">2024 Reading Goal</h3>
+                                            <p class="text-warm-gray text-sm mb-4">Read 24 books this year</p>
+                                            
+                                            <div class="mb-4">
+                                                <div class="flex justify-between text-sm mb-2">
+                                                    <span class="text-warm-gray">Progress</span>
+                                                    <span class="font-medium text-terracotta">18/24 books (75%)</span>
+                                                </div>
+                                                <div class="w-full bg-gray-200 rounded-full h-3">
+                                                    <div class="challenge-progress rounded-full" style="width: 75%"></div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="flex items-center justify-between">
+                                                <div class="text-sm text-warm-gray">
+                                                    <span>🎯</span>
+                                                    <span class="ml-1">6 books to go!</span>
+                                                </div>
+                                                <button class="btn-primary px-4 py-2 rounded-lg text-sm">
+                                                    Update Progress
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Challenge 2 -->
+                                <div class="bg-white p-6 rounded-xl shadow-sm">
+                                    <div class="flex items-start gap-4">
+                                        <div class="text-4xl">🌍</div>
+                                        <div class="flex-1">
+                                            <h3 class="font-semibold text-charcoal mb-2">Genre Explorer</h3>
+                                            <p class="text-warm-gray text-sm mb-4">Try 6 different genres</p>
+                                            
+                                            <div class="mb-4">
+                                                <div class="flex justify-between text-sm mb-2">
+                                                    <span class="text-warm-gray">Progress</span>
+                                                    <span class="font-medium text-terracotta">4/6 genres (67%)</span>
+                                                </div>
+                                                <div class="w-full bg-gray-200 rounded-full h-3">
+                                                    <div class="challenge-progress rounded-full" style="width: 67%"></div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="grid grid-cols-6 gap-2 mb-4">
+                                                <div class="text-center">
+                                                    <div class="w-8 h-8 bg-sage rounded-full flex items-center justify-center text-white text-xs font-bold mx-auto mb-1">✓</div>
+                                                    <div class="text-xs text-warm-gray">Mystery</div>
+                                                </div>
+                                                <div class="text-center">
+                                                    <div class="w-8 h-8 bg-sage rounded-full flex items-center justify-center text-white text-xs font-bold mx-auto mb-1">✓</div>
+                                                    <div class="text-xs text-warm-gray">Romance</div>
+                                                </div>
+                                                <div class="text-center">
+                                                    <div class="w-8 h-8 bg-sage rounded-full flex items-center justify-center text-white text-xs font-bold mx-auto mb-1">✓</div>
+                                                    <div class="text-xs text-warm-gray">Fiction</div>
+                                                </div>
+                                                <div class="text-center">
+                                                    <div class="w-8 h-8 bg-sage rounded-full flex items-center justify-center text-white text-xs font-bold mx-auto mb-1">✓</div>
+                                                    <div class="text-xs text-warm-gray">Fantasy</div>
+                                                </div>
+                                                <div class="text-center">
+                                                    <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-gray-600 text-xs font-bold mx-auto mb-1">?</div>
+                                                    <div class="text-xs text-warm-gray">Sci-Fi</div>
+                                                </div>
+                                                <div class="text-center">
+                                                    <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-gray-600 text-xs font-bold mx-auto mb-1">?</div>
+                                                    <div class="text-xs text-warm-gray">Poetry</div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="flex items-center justify-between">
+                                                <div class="text-sm text-warm-gray">
+                                                    <span>🎯</span>
+                                                    <span class="ml-1">Try Sci-Fi or Poetry next!</span>
+                                                </div>
+                                                <button class="btn-primary px-4 py-2 rounded-lg text-sm">
+                                                    Get Recommendations
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Challenge 3 -->
+                                <div class="bg-white p-6 rounded-xl shadow-sm">
+                                    <div class="flex items-start gap-4">
+                                        <div class="text-4xl">👥</div>
+                                        <div class="flex-1">
+                                            <h3 class="font-semibold text-charcoal mb-2">Community Picks</h3>
+                                            <p class="text-warm-gray text-sm mb-4">Read 12 community recommendations</p>
+                                            
+                                            <div class="mb-4">
+                                                <div class="flex justify-between text-sm mb-2">
+                                                    <span class="text-warm-gray">Progress</span>
+                                                    <span class="font-medium text-terracotta">7/12 books (58%)</span>
+                                                </div>
+                                                <div class="w-full bg-gray-200 rounded-full h-3">
+                                                    <div class="challenge-progress rounded-full" style="width: 58%"></div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="flex items-center justify-between">
+                                                <div class="text-sm text-warm-gray">
+                                                    <span>🎯</span>
+                                                    <span class="ml-1">5 more to go!</span>
+                                                </div>
+                                                <button class="btn-primary px-4 py-2 rounded-lg text-sm">
+                                                    See Recommendations
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Leaderboard -->
+                        <div>
+                            <h3 class="font-display text-xl font-semibold text-charcoal mb-4">Community Leaderboard</h3>
+                            <div class="bg-white p-6 rounded-xl shadow-sm">
+                                <div class="space-y-4">
+                                    <div class="leaderboard-item flex items-center p-3 rounded-lg">
+                                        <div class="w-8 h-8 bg-gold rounded-full flex items-center justify-center text-white font-bold text-sm mr-3">1</div>
+                                        <div class="flex-1">
+                                            <div class="font-medium text-charcoal">Sarah M.</div>
+                                            <div class="text-xs text-warm-gray">47 books this year</div>
+                                        </div>
+                                        <div class="text-gold text-xl">🏆</div>
+                                    </div>
+                                    
+                                    <div class="leaderboard-item flex items-center p-3 rounded-lg">
+                                        <div class="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center text-white font-bold text-sm mr-3">2</div>
+                                        <div class="flex-1">
+                                            <div class="font-medium text-charcoal">Alex K.</div>
+                                            <div class="text-xs text-warm-gray">42 books this year</div>
+                                        </div>
+                                        <div class="text-gray-400 text-xl">🥈</div>
+                                    </div>
+                                    
+                                    <div class="leaderboard-item flex items-center p-3 rounded-lg">
+                                        <div class="w-8 h-8 bg-amber-600 rounded-full flex items-center justify-center text-white font-bold text-sm mr-3">3</div>
+                                        <div class="flex-1">
+                                            <div class="font-medium text-charcoal">Maria L.</div>
+                                            <div class="text-xs text-warm-gray">38 books this year</div>
+                                        </div>
+                                        <div class="text-amber-600 text-xl">🥉</div>
+                                    </div>
+                                    
+                                    <div class="leaderboard-item flex items-center p-3 rounded-lg bg-terracotta/10">
+                                        <div class="w-8 h-8 bg-terracotta rounded-full flex items-center justify-center text-white font-bold text-sm mr-3">8</div>
+                                        <div class="flex-1">
+                                            <div class="font-medium text-charcoal">You</div>
+                                            <div class="text-xs text-warm-gray">18 books this year</div>
+                                        </div>
+                                        <div class="text-terracotta text-xl">📚</div>
+                                    </div>
+                                </div>
+                                
+                                <button class="w-full btn-secondary py-2 rounded-lg text-sm mt-4">
+                                    View Full Leaderboard
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Discussions Tab -->
+                <div id="discussions-tab" class="tab-content" style="display: none;">
+                    <div class="grid lg:grid-cols-3 gap-8">
+                        <div class="lg:col-span-2">
+                            <h2 class="font-display text-2xl font-semibold text-charcoal mb-6">Community Discussions</h2>
+                            
+                            <div class="space-y-4">
+                                <!-- Discussion 1 -->
+                                <div class="discussion-thread bg-white p-6 rounded-xl shadow-sm">
+                                    <div class="flex items-start gap-4">
+                                        <div class="w-10 h-10 bg-terracotta rounded-full flex items-center justify-center">
+                                            <span class="text-white font-medium text-sm">AS</span>
+                                        </div>
+                                        <div class="flex-1">
+                                            <div class="flex items-center gap-2 mb-2">
+                                                <h3 class="font-semibold text-charcoal">Thoughts on "The Seven Husbands of Evelyn Hugo"?</h3>
+                                                <span class="bg-sage text-white px-2 py-1 rounded text-xs font-medium">Fiction</span>
+                                            </div>
+                                            <p class="text-warm-gray text-sm mb-3">Just finished this book and I'm completely blown away! The way Taylor Jenkins Reid weaves together the past and present narratives is masterful. What did everyone else think about the ending? I definitely didn't see that twist coming!</p>
+                                            <div class="flex items-center justify-between text-sm text-warm-gray">
+                                                <div class="flex items-center gap-4">
+                                                    <span>👍 23 likes</span>
+                                                    <span>💬 12 replies</span>
+                                                    <span>👁️ 89 views</span>
+                                                </div>
+                                                <span>2 hours ago</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Discussion 2 -->
+                                <div class="discussion-thread bg-white p-6 rounded-xl shadow-sm">
+                                    <div class="flex items-start gap-4">
+                                        <div class="w-10 h-10 bg-sage rounded-full flex items-center justify-center">
+                                            <span class="text-white font-medium text-sm">MJ</span>
+                                        </div>
+                                        <div class="flex-1">
+                                            <div class="flex items-center gap-2 mb-2">
+                                                <h3 class="font-semibold text-charcoal">Best mystery novels of 2024?</h3>
+                                                <span class="bg-muted-blue text-white px-2 py-1 rounded text-xs font-medium">Mystery</span>
+                                            </div>
+                                            <p class="text-warm-gray text-sm mb-3">Looking for recommendations for the best mystery/thriller books published this year. I've already read "Gone Girl" and "The Silent Patient" - what should I pick up next? Preferably something with unreliable narrators!</p>
+                                            <div class="flex items-center justify-between text-sm text-warm-gray">
+                                                <div class="flex items-center gap-4">
+                                                    <span>👍 18 likes</span>
+                                                    <span>💬 8 replies</span>
+                                                    <span>👁️ 67 views</span>
+                                                </div>
+                                                <span>5 hours ago</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Discussion 3 -->
+                                <div class="discussion-thread bg-white p-6 rounded-xl shadow-sm">
+                                    <div class="flex items-start gap-4">
+                                        <div class="w-10 h-10 bg-muted-blue rounded-full flex items-center justify-center">
+                                            <span class="text-white font-medium text-sm">DL</span>
+                                        </div>
+                                        <div class="flex-1">
+                                            <div class="flex items-center gap-2 mb-2">
+                                                <h3 class="font-semibold text-charcoal">Sci-fi recommendations for beginners?</h3>
+                                                <span class="bg-terracotta text-white px-2 py-1 rounded text-xs font-medium">Sci-Fi</span>
+                                            </div>
+                                            <p class="text-warm-gray text-sm mb-3">I want to get into science fiction but don't know where to start. I enjoyed "Klara and the Sun" - are there other accessible sci-fi books you'd recommend for someone new to the genre?</p>
+                                            <div class="flex items-center justify-between text-sm text-warm-gray">
+                                                <div class="flex items-center gap-4">
+                                                    <span>👍 31 likes</span>
+                                                    <span>💬 15 replies</span>
+                                                    <span>👁️ 123 views</span>
+                                                </div>
+                                                <span>1 day ago</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="text-center mt-8">
+                                <button class="btn-primary px-6 py-3 rounded-full font-medium">
+                                    Start New Discussion
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Discussion Categories & Filters -->
+                        <div>
+                            <h3 class="font-display text-xl font-semibold text-charcoal mb-4">Categories</h3>
+                            <div class="bg-white p-6 rounded-xl shadow-sm mb-6">
+                                <div class="space-y-3">
+                                    <label class="flex items-center">
+                                        <input type="checkbox" class="mr-3" checked>
+                                        <span class="text-sm">Fiction (23)</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" class="mr-3" checked>
+                                        <span class="text-sm">Mystery (18)</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" class="mr-3">
+                                        <span class="text-sm">Romance (15)</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" class="mr-3">
+                                        <span class="text-sm">Sci-Fi (12)</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" class="mr-3">
+                                        <span class="text-sm">Non-Fiction (9)</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" class="mr-3">
+                                        <span class="text-sm">Fantasy (8)</span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <h3 class="font-display text-xl font-semibold text-charcoal mb-4">Popular Tags</h3>
+                            <div class="bg-white p-6 rounded-xl shadow-sm">
+                                <div class="flex flex-wrap gap-2">
+                                    <span class="bg-gray-100 text-warm-gray px-3 py-1 rounded-full text-xs cursor-pointer hover:bg-terracotta hover:text-white transition-colors">book-recommendations</span>
+                                    <span class="bg-gray-100 text-warm-gray px-3 py-1 rounded-full text-xs cursor-pointer hover:bg-terracotta hover:text-white transition-colors">character-analysis</span>
+                                    <span class="bg-gray-100 text-warm-gray px-3 py-1 rounded-full text-xs cursor-pointer hover:bg-terracotta hover:text-white transition-colors">plot-twists</span>
+                                    <span class="bg-gray-100 text-warm-gray px-3 py-1 rounded-full text-xs cursor-pointer hover:bg-terracotta hover:text-white transition-colors">writing-style</span>
+                                    <span class="bg-gray-100 text-warm-gray px-3 py-1 rounded-full text-xs cursor-pointer hover:bg-terracotta hover:text-white transition-colors">emotional-impact</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Author Spotlights Tab -->
+                <div id="authors-tab" class="tab-content" style="display: none;">
+                    <h2 class="font-display text-2xl font-semibold text-charcoal mb-6">Author Spotlights</h2>
+                    
+                    <div class="grid md:grid-cols-2 gap-8 mb-12">
+                        <!-- Featured Author -->
+                        <div class="author-spotlight p-8 rounded-2xl">
+                            <div class="flex items-start gap-6">
+                                <img src="hero-library-community.png" alt="Taylor Jenkins Reid" class="w-24 h-24 rounded-full object-cover">
+                                <div class="flex-1">
+                                    <h3 class="font-display text-2xl font-bold text-charcoal mb-2">Taylor Jenkins Reid</h3>
+                                    <p class="text-warm-gray mb-4">Bestselling author of "The Seven Husbands of Evelyn Hugo" and "Daisy Jones & The Six"</p>
+                                    <p class="text-sm text-warm-gray mb-4">Taylor Jenkins Reid is known for her compelling character-driven narratives that explore themes of love, ambition, and the complexities of human relationships. Her latest novel continues to captivate readers worldwide.</p>
+                                    <div class="flex gap-3">
+                                        <button onclick="openModal('authorQAModal')" class="btn-primary px-4 py-2 rounded-lg text-sm">
+                                            Ask a Question
+                                        </button>
+                                        <button class="btn-secondary px-4 py-2 rounded-lg text-sm" onclick="viewAuthorBooks('Taylor Jenkins Reid')">
+                                            View Books
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Upcoming Author -->
+                        <div class="bg-white p-8 rounded-2xl shadow-sm">
+                            <div class="flex items-start gap-6">
+                                <img src="digital-library-magic.png" alt="Madeline Miller" class="w-24 h-24 rounded-full object-cover">
+                                <div class="flex-1">
+                                    <h3 class="font-display text-2xl font-bold text-charcoal mb-2">Madeline Miller</h3>
+                                    <p class="text-warm-gray mb-4">Author of "Circe" and "The Song of Achilles"</p>
+                                    <p class="text-sm text-warm-gray mb-4">Madeline Miller brings ancient mythology to life with her lyrical prose and deep character development. Her retellings of Greek myths have earned critical acclaim and a devoted readership.</p>
+                                    <div class="flex gap-3">
+                                        <button class="btn-primary px-4 py-2 rounded-lg text-sm">
+                                            Get Notified
+                                        </button>
+                                        <button class="btn-secondary px-4 py-2 rounded-lg text-sm" onclick="viewAuthorBooks('Madeline Miller')">
+                                            View Books
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Past Events -->
+                    <h3 class="font-display text-xl font-semibold text-charcoal mb-6">Past Author Events</h3>
+                    <div class="grid md:grid-cols-3 gap-6">
+                        <div class="bg-white p-6 rounded-xl shadow-sm">
+                            <img src="books-discovery.png" alt="Matt Haig" class="w-16 h-16 rounded-full object-cover mx-auto mb-4">
+                            <h4 class="font-semibold text-charcoal text-center mb-2">Matt Haig</h4>
+                            <p class="text-warm-gray text-sm text-center mb-3">"The Midnight Library" Discussion</p>
+                            <div class="text-xs text-warm-gray text-center mb-4">November 12, 2024</div>
+                            <button class="btn-secondary w-full py-2 rounded-lg text-sm">
+                                Watch Recording
+                            </button>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-xl shadow-sm">
+                            <img src="hero-library-community.png" alt="Kazuo Ishiguro" class="w-16 h-16 rounded-full object-cover mx-auto mb-4">
+                            <h4 class="font-semibold text-charcoal text-center mb-2">Kazuo Ishiguro</h4>
+                            <p class="text-warm-gray text-sm text-center mb-3">"Klara and the Sun" Book Signing</p>
+                            <div class="text-xs text-warm-gray text-center mb-4">October 28, 2024</div>
+                            <button class="btn-secondary w-full py-2 rounded-lg text-sm">
+                                Watch Recording
+                            </button>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-xl shadow-sm">
+                            <img src="digital-library-magic.png" alt="Gillian Flynn" class="w-16 h-16 rounded-full object-cover mx-auto mb-4">
+                            <h4 class="font-semibold text-charcoal text-center mb-2">Gillian Flynn</h4>
+                            <p class="text-warm-gray text-sm text-center mb-3">Mystery Writing Masterclass</p>
+                            <div class="text-xs text-warm-gray text-center mb-4">September 15, 2024</div>
+                            <button class="btn-secondary w-full py-2 rounded-lg text-sm">
+                                Watch Recording
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Author Q&A Modal -->
+    <div id="authorQAModal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="font-display text-2xl font-bold text-charcoal">Ask Taylor Jenkins Reid</h3>
+                <button onclick="closeModal('authorQAModal')" class="text-warm-gray hover:text-charcoal">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="mb-6">
+                <p class="text-warm-gray mb-4">Submit your question for Taylor Jenkins Reid. She'll be answering selected questions during her live session on December 18th.</p>
+            </div>
+            
+            <div class="mb-6">
+                <label class="block text-charcoal font-medium mb-2">Your Question</label>
+                <textarea class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-terracotta" rows="4" placeholder="What would you like to ask the author?"></textarea>
+            </div>
+            
+            <div class="mb-8">
+                <label class="block text-charcoal font-medium mb-2">Which book is your question about?</label>
+                <select class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-terracotta">
+                    <option>The Seven Husbands of Evelyn Hugo</option>
+                    <option>Daisy Jones & The Six</option>
+                    <option>Malibu Rising</option>
+                    <option>Carrie Soto Is Back</option>
+                    <option>General writing question</option>
+                </select>
+            </div>
+            
+            <div class="flex gap-4">
+                <button onclick="closeModal('authorQAModal')" class="flex-1 btn-secondary py-3 rounded-lg font-medium">
+                    Cancel
+                </button>
+                <button onclick="submitQuestion()" class="flex-1 btn-primary py-3 rounded-lg font-medium">
+                    Submit Question
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-charcoal text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <div class="font-display text-2xl font-bold mb-4">The Book Haven</div>
+                <p class="text-gray-400 mb-6">Bringing communities together through the magic of reading</p>
+                <div class="text-sm text-gray-500">
+                    © 2024 The Book Haven. All rights reserved.
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bottom Navigation -->
+    <div id="bottom-nav" class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
+        <div class="flex justify-around max-w-7xl mx-auto">
+            <a href="index.html" class="flex flex-col items-center justify-center p-2 text-terracotta">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1V10a1 1 0 00-1-1H7a1 1 0 00-1 1v10a1 1 0 001 1h2a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1h2a1 1 0 001-1z" />
+                </svg>
+                <span class="text-xs">Discover</span>
+            </a>
+            <a href="my-library.html" class="flex flex-col items-center justify-center p-2 text-gray-500">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 19V4a2 2 0 012-2h10a2 2 0 012 2v15l-7-4-7 4z" />
+                </svg>
+                <span class="text-xs">My Library</span>
+            </a>
+            <a href="community.html" class="flex flex-col items-center justify-center p-2 text-gray-500">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.653-.184-1.268-.5-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.653.184-1.268.5-1.857m0 0a3.001 3.001 0 014.5 0M12 15a3 3 0 110-6 3 3 0 010 6z" />
+                </svg>
+                <span class="text-xs">Community</span>
+            </a>
+        </div>
+    </div>
+
+    <script src="books.js"></script>
+    <script src="mobile-nav.js"></script>
+    <script>
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTabs();
+            initializeAnimations();
+        });
+
+        function initializeTabs() {
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const tabId = this.dataset.tab;
+                    
+                    // Update active tab button
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Show corresponding tab content
+                    tabContents.forEach(content => {
+                        if (content.id === tabId + '-tab') {
+                            content.style.display = 'block';
+                        } else {
+                            content.style.display = 'none';
+                        }
+                    });
+                });
+            });
+        }
+
+        function initializeAnimations() {
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, observerOptions);
+
+            document.querySelectorAll('.fade-in').forEach(el => {
+                observer.observe(el);
+            });
+
+            setTimeout(() => {
+                document.querySelectorAll('.fade-in').forEach((el, index) => {
+                    if (el.getBoundingClientRect().top < window.innerHeight) {
+                        setTimeout(() => {
+                            el.classList.add('visible');
+                        }, index * 100);
+                    }
+                });
+            }, 500);
+        }
+
+        function joinEvent(eventId) {
+            showNotification('Successfully joined the event! You\'ll receive a confirmation email shortly.', 'success');
+        }
+
+        function showEventDetails(eventId) {
+            showNotification('Event details would open here in the full implementation.', 'info');
+        }
+
+        function submitQuestion() {
+            closeModal('authorQAModal');
+            showNotification('Your question has been submitted! The author will review all questions before the live session.', 'success');
+        }
+
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('show');
+            }
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('show');
+            }
+        }
+
+        function viewAuthorBooks(authorName) {
+            localStorage.setItem('searchQuery', authorName);
+            window.location.href = 'index.html';
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-20 right-4 z-50 px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 ${
+                type === 'success' ? 'bg-green-500 text-white' :
+                type === 'error' ? 'bg-red-500 text-white' :
+                'bg-blue-500 text-white'
+            }`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0)';
+            }, 100);
+            
+            setTimeout(() => {
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+
+        // Close modals when clicking outside
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal')) {
+                e.target.classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>
